@@ -25,6 +25,7 @@
   become: yes
   file:
     dest: "{{zsh_antigen_path}}"
+    owner: "{{ zsh_user }}"
     mode: '0755'
     state: directory
   when: not zsh_antigen_path_present.stat.exists
@@ -36,7 +37,7 @@
     version: "{{ zsh_antigen_version }}"
     force: yes
   become: yes
-  #become_user: "{{ zsh_user }}"
+  become_user: "{{ zsh_user }}"
   register: zsh_register_antigen_clone
 
 - name: Clone iwfmp/mc-solarized-skin
