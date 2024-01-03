@@ -1,30 +1,47 @@
-- name: Get Ubuntu/Debian users's home path
-  shell: "egrep '^.*:.*:[1-9][0-9]{3,4}:.*:.*:.*:.*(bash|zsh)$' /etc/passwd | awk -F: '{print $6}'"
-  register: paths
-  when: ansible_os_family == 'Debian'
-  changed_when: false
+- name: Get users and path from define list
+  when: zsh_users_and_path_alias_list is defined
+  block: 
+    - name: Get users from list
+      set_fact:
+        basic_all_users: "{{ zsh_users_and_path_alias_list | map(attribute='user') | list }}"
+    - name: Get path from list
+      set_fact:
+        allpaths: "{{ zsh_users_and_path_alias_list | map(attribute='path') | list }}"
 
-- name: Get Ubuntu/Debian users
-  shell: "egrep '^.*:.*:[1-9][0-9]{3,4}:.*:.*:.*:.*(bash|zsh)$' /etc/passwd | awk -F: '{print $1}'"
-  register: zsh_users
-  when: ansible_os_family == 'Debian' and paths is defined and paths.stdout != ""
-  changed_when: false
-- name: Format user list
-  set_fact:
-    zsh_list_users: "{{['root','root'] + zsh_users.stdout.splitlines()| list}}"
-  when: ansible_os_family == 'Debian' and paths is defined and paths.stdout != ""
+- name: Find users and path on the system
+  when: basic_users_and_path_alias_list is not defined
+  block:
+    - name: Get Ubuntu/Debian users's home path
+      shell: "egrep '^.*:.*:[1-9][0-9]{3,4}:.*:.*:.*:.*(bash|zsh)$' /etc/passwd | awk -F: '{print $6}'"
+      register: paths
+      when: ansible_os_family == 'Debian' and zsh_shared 
+      changed_when: false
 
-- name: Merge the users path and root/skel to list
-  set_fact:
-    allpaths: "{{ ['/root','/etc/skel'] + paths.stdout.splitlines()| list }}"
-  when: zsh_shared and paths is defined and paths.stdout != ""
-- name: Use only root/skel for the list (no users found)
-  set_fact:
-    allpaths: "{{ ['/root','/etc/skel']}}"
-  when: paths is defined and paths.stdout == ""
+    - name: Get Ubuntu/Debian users
+      shell: "egrep '^.*:.*:[1-9][0-9]{3,4}:.*:.*:.*:.*(bash|zsh)$' /etc/passwd | awk -F: '{print $1}'"
+      register: zsh_users
+      when: ansible_os_family == 'Debian' and zsh_shared and paths is defined and paths.stdout != ""
+      changed_when: false
+    - name: Format user list
+      set_fact:
+        zsh_list_users: "{{['root','root'] + zsh_users.stdout.splitlines()| list}}"
+      when: ansible_os_family == 'Debian' and zsh_shared and paths is defined and paths.stdout != ""
+
+    - name: Merge the users path and root/skel to list
+      set_fact:
+        allpaths: "{{ ['/root','/etc/skel'] + paths.stdout.splitlines()| list }}"
+      when: zsh_shared and paths is defined and paths.stdout != ""
+    - name: Use only root/skel for the list (no users found)
+      set_fact:
+        allpaths: "{{ ['/root','/etc/skel']}}"
+      when: zsh_shared and paths is defined and paths.stdout == ""
+    - name: Take only user directory {{ lookup('env','HOME') }}
+      set_fact:
+        allpaths: "{{ [lookup('env','HOME')] }}"
+      when: not zsh_shared
 
 - name: Install .zshrc in {{allpaths | join(',')}}
-  become: yes
+  become: true
   copy:
     content: source /usr/share/zsh-config/.zshrc
     dest: "{{item}}/.zshrc"
