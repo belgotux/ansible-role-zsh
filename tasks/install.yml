@@ -2,41 +2,53 @@
 
 - name: Update package cache
   package:
-    update_cache: true
-  become: true
-  when: ansible_os_family != 'Darwin'
+    update_cache: yes
+    cache_valid_time: 86400
+  become: yes
+  when: ansible_os_family != 'Darwin' and not ansible_pkg_mgr is regex('^dnf')
 
-- name: Install zsh, git, wget
+- name: Update package cache (dnf)
+  package:
+    update_cache: yes
+  become: yes
+  when: ansible_pkg_mgr == 'dnf'
+
+- name: Install zsh, git, wget, fd-find, fzf
   package:
     name:
       - zsh
       - git
       - wget
+      - "{{ 'fd-find' if ansible_distribution_version is version_compare('20.04', '>=') else 'curl' }}"  # fd-find for ubuntu 20.04
+      - "{{ 'fd' if ansible_os_family == 'Darwin' else 'curl' }}"
+      - "{{ 'fzf' if ansible_os_family == 'Darwin' else 'curl' }}"
     state: present
   # brew don't work from root user on macOS
-  become: true
+  become: yes
+  become_user: "{{ 'root' if ansible_os_family != 'Darwin' else zsh_user }}"
   when: not (zsh_user == 'root' and ansible_os_family == 'Darwin')
 
-- name: check if {{zsh_antigen_path}} exist
-  stat: 
-    path: "{{zsh_antigen_path}}"
+- name: Check if {{ zsh_antigen_path }} exist
+  stat:
+    path: "{{ zsh_antigen_path }}"
   register: zsh_antigen_path_present
-- name: create direcoty {{zsh_antigen_path}}
-  become: true
+
+- name: Create directory {{ zsh_antigen_path}}
+  become: yes
+  become_user: "{{ zsh_user }}"
   file:
     dest: "{{zsh_antigen_path}}"
-    owner: "{{ zsh_user }}"
     mode: '0755'
     state: directory
   when: not zsh_antigen_path_present.stat.exists
 
 - name: Clone antigen {{ zsh_antigen_version }}
   git:
-    repo: https://github.com/zsh-users/antigen.git
+    repo: "{{ zsh_antigen_repo }}"
     dest: "{{ zsh_antigen_path }}/antigen"
     version: "{{ zsh_antigen_version }}"
-    force: true
-  become: true
+    force: yes
+  become: yes
   become_user: "{{ zsh_user }}"
   register: zsh_register_antigen_clone
 
@@ -84,7 +96,7 @@
     dest: "{{ zsh_fzf_path_absolute }}"
     remote_src: true
     creates: "{{ zsh_fzf_path_absolute }}/fzf"
-  when: zsh_register_fzf_command.rc == 1
+  when: zsh_register_fzf_command.rc == 1 and ansible_os_family != 'Darwin'
 
 - name: Set directory permissions
   become: true

@@ -1,17 +1,23 @@
-[![Build Status](https://travis-ci.org/viasite-ansible/ansible-role-zsh.svg?branch=master)](https://travis-ci.org/viasite-ansible/ansible-role-zsh)
+Tested on Ubuntu 20.04, Ubuntu 22.04, Ubuntu 24.04, MacOS 14.4.
 
-Tested on Debian 10, Ubuntu 16.04, Ubuntu 18.04, Ubuntu 20.04, macOS 10.12, CentOS 8.
+Tested long time ago: Ubuntu 18.04, MacOS 10.12, CentOS 8
 
 **For upgrade from viasite-ansible.zsh 1.x, 2.x to 3.0 see [below](#upgrade).**
 
 
 
 ## Zero-knowledge install:
-If you using Ubuntu or Debian and not familiar with Ansible, you can just execute [install.sh](install.sh) on target machine:
+If you are using Ubuntu or Debian and not familiar with Ansible, you can just execute [install.sh](install.sh) on target machine:
 ```
 curl https://raw.githubusercontent.com/viasite-ansible/ansible-role-zsh/master/install.sh | bash
 ```
 It will install pip3, ansible and setup zsh for root and current user.
+
+## MacOS zero-knowledge install:
+Requirements: brew, python. Asks user's password. [install-macos.sh](install-macos.sh) will install ansible, and setup zsh for current user and optionally for root:
+```
+curl https://raw.githubusercontent.com/viasite-ansible/ansible-role-zsh/master/install-macos.sh | bash
+```
 
 Then [configure terminal application](#configure-terminal-application).
 
@@ -24,7 +30,7 @@ Then [configure terminal application](#configure-terminal-application).
 - [zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions)
 - [zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting)
 - [unixorn/autoupdate-antigen.zshplugin](https://github.com/unixorn/autoupdate-antigen.zshplugin)
-- [ytet5uy4/fzf-widgets](https://github.com/ytet5uy4/fzf-widgets)
+- [sorenson-axial/fzf-widgets](https://github.com/sorenson-axial/fzf-widgets)
 - [urbainvaes/fzf-marks](https://github.com/popstas/urbainvaes/fzf-marks)
 
 ## Features
@@ -42,7 +48,7 @@ Then [configure terminal application](#configure-terminal-application).
 ![colors demo](https://github.com/popstas/popstas.github.io/blob/master/images/2017-03/ansible-role-zsh-colors.gif?raw=true)
 
 ## Midnight Commander Solarized Dark skin
-If you using Solarized Dark scheme and `mc`, you should want to install skin, then set `zsh_mc_solarized_skin: yes`
+If you are using Solarized Dark scheme and `mc`, you should want to install skin, then set `zsh_mc_solarized_skin: yes`
 
 
 ## Demo install in Vagrant
@@ -131,6 +137,9 @@ It causes some limitations:
 
 For install shared configuration you should set `zsh_shared: yes`.
 Configuration will install to `/usr/share/zsh-config`, then you just can include to user config:
+
+## Install for all users
+Set `zsh_source_for_all_users: yes`
 
 ``` bash
 source /usr/share/zsh-config/.zshrc

@@ -1,5 +1,4 @@
 ---
-
 - name: Check zsh version
   shell: "set -o pipefail; zsh --version | cut -d ' ' -f2"
   args:
@@ -15,7 +14,7 @@
 
 - name: Merge bundles lists
   set_fact:
-    zsh_antigen_bundles: "{{ zsh_antigen_bundles }} + {{ zsh_antigen_bundles_extras }}"
+    zsh_antigen_bundles: "{{ zsh_antigen_bundles | union(zsh_antigen_bundles_extras) | unique }}"
 
 - name: Disable autoupdate if zsh_shared install
   set_fact:
@@ -31,14 +30,16 @@
   when: item.command is defined
   register: zsh_register_commands_exists
 
+#- debug: var=zsh_register_commands_exists
+
 - name: Merge hotkeys lists
   set_fact:
-    zsh_hotkeys: "{{ zsh_hotkeys }} + {{ zsh_hotkeys_extras }}"
+    zsh_hotkeys: "{{ zsh_hotkeys | union(zsh_hotkeys_extras) | unique }}"
 
 - name: Check antigen version
   shell: |
     set -o pipefail
-    cat "{{ zsh_antigen_path }}/antigen/VERSION" | tr -d 'v'
+    cat {{ zsh_antigen_path }}/antigen/VERSION | sed 's/^v//'
   args:
     executable: /bin/bash
   register: zsh_register_antigen_version
