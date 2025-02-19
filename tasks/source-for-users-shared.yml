@@ -35,9 +35,9 @@
       set_fact:
         allpaths: "{{ ['/root','/etc/skel']}}"
       when: zsh_shared and paths is defined and paths.stdout == ""
-    - name: Take only user directory {{ lookup('env','HOME') }}
+    - name: Take only user directory {{ ansible_env.HOME }}
       set_fact:
-        allpaths: "{{ [lookup('env','HOME')] }}"
+        allpaths: "{{ [ansible_env.HOME] }}"
       when: not zsh_shared
 
 - name: Install .zshrc in {{allpaths | join(',')}}
